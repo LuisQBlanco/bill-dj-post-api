@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.8-alpine
 # MAINTAINER LuisQuinones
 
 ENV PYTHONUNBUFFERED 1
@@ -23,10 +23,10 @@ RUN pip install -r /billdjpostg/requirements.txt
 RUN apk update --no-cache
 RUN apk del .tmp-build-deps
 
-# RUN pip3 install -U pylint
+RUN pip3 install -U pylint
 
 
-# RUN mkdir /billdjpostg
+# RUN fmkdir /billdjpostg
 WORKDIR /billdjpostg
 COPY ./app /billdjpostg/
 
