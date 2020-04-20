@@ -5,13 +5,22 @@ from bills import views
 
 from django.conf.urls import url
 
-# router = DefaultRouter()
-# router.register('customers', views.customer_list)
+router = DefaultRouter()
+router.register('headbills', views.HeadBillViewSet)
 
-# app_name = 'bills'
+app_name = 'bills'
 
 urlpatterns = [
-    # path('', include(router.urls))
-    url(r'^customer/$', views.customer_list),
-    url(r'^customer/(?P<pk>[0-9]+)$', views.customer_detail)
+    # url(r'^customer/$', views.customer_list),
+    # url(r'^customer/(?P<pk>[0-9]+)$', views.customer_detail)
+    path('customers/',views.customer_list),
+    path('customers/<int:pk>',views.customer_detail),
+    path('subscriptions/',views.SubscriptionList.as_view()),
+    path('subscriptions/<int:pk>',views.SubscriptionDetail.as_view()),
+    path("products/", views.ProductList.as_view()),
+    path("products/<int:pk>", views.ProductDetail.as_view()),
+    path("taxestype/", views.TaxTypeList.as_view()),
+    path("taxestype/<int:pk>", views.TaxTypeDetail.as_view()),
+    path('api/', include(router.urls))
+
 ]
