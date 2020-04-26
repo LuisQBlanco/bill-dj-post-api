@@ -237,7 +237,7 @@ def BillDetail_list(request, pk):
 
 
         # test1 = BillDetail.objects.filter(productID__)
-        billproductsid2 = Product.objects.filter(productID__BillID='1').values('NameProduct', 'PriceProduct')
+        billproductsid2 = Product.objects.filter(productID__BillID=billidnow).values('NameProduct', 'PriceProduct')
         # billprodList_serializer = serializers.ProductSerializer(billproductsid2, many=True)
 
         # billdata['Products'] = billprodList_serializer
@@ -249,7 +249,7 @@ def BillDetail_list(request, pk):
         
 
         # billdata['NameProduct'] = billproductsid2
-        total_price = Product.objects.filter(productID__BillID='1').aggregate(total_price=Sum('PriceProduct'))
+        total_price = Product.objects.filter(productID__BillID=billidnow).aggregate(total_price=Sum('PriceProduct'))
 
         billdata['TotalPrice'] = total_price['total_price'] 
         
