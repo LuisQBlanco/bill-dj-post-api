@@ -17,12 +17,40 @@ from rest_framework import viewsets
 
 # from rest_framework.generics import ListAPIView
 
-from core.models import Customer
-from core.models import Subscription, Product, TaxType, HeadBill
+from core.models import Customer, Subscription, Product, TaxType
+from core.models import  HeadBill, RelationshipTaxProduct, BillDetail
 from bills import serializers
-from bills.serializers import SubscriptionSerializer, ProductSerializer, TaxTypeSerializer, HeadBillSerializer
+from bills.serializers import CustomerSerializer,SubscriptionSerializer
+from bills.serializers import ProductSerializer, TaxTypeSerializer, HeadBillSerializer, RelationshipTaxProductSerializer
+from bills.serializers import BillSerializer, BillDetailSerializer
+
+from django.db.models import Sum
 
 
+# API with Class with Generics
+# /customers/
+
+class CustomerListView(generics.ListCreateAPIView):
+    queryset = Customer.objects.all()
+    # order_by('LastName').distinct('LastName')
+    serializer_class = CustomerSerializer
+
+class CustomerDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+
+# API with Class with Generics
+# /subscriptions/
+
+class SubscriptionListView(generics.ListCreateAPIView):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+
+class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+
+"""
 # API with decorators and function
 # /customers/
 
@@ -68,7 +96,6 @@ def customer_detail(request, pk):
         customer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 # API with Class with APIView
 # /Subscriptions/
 
@@ -112,9 +139,10 @@ class SubscriptionDetail(APIView):
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+"""
 
 # API with Class with Mixin
-# /Productos/
+# /products/
 
 class ProductList(mixins.ListModelMixin,mixins.CreateModelMixin,generics.GenericAPIView):
     queryset = Product.objects.all()
@@ -140,7 +168,7 @@ class ProductDetail(mixins.RetrieveModelMixin,mixins.UpdateModelMixin,mixins.Des
         return self.destroy(request,pk)
 
 # API with Class with Generics
-# /TaxesTypes/
+# /taxestype/
 
 class TaxTypeList(generics.ListCreateAPIView):
     queryset = TaxType.objects.all()
@@ -150,9 +178,84 @@ class TaxTypeDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = TaxType.objects.all()
     serializer_class = TaxTypeSerializer
 
+# API with Class with ViewSets
+# api2/relationshipTaxProduct/
+
+class RelationshipTaxProductViewSet(viewsets.ModelViewSet):
+    queryset = RelationshipTaxProduct.objects.all()
+    serializer_class = RelationshipTaxProductSerializer
+
+
 # API with Class with Viewsets
-# /HeadBill/
+# /headbill/
 
 class HeadBillViewSet(viewsets.ModelViewSet):
     queryset = HeadBill.objects.all()
     serializer_class = HeadBillSerializer
+
+# API with Class with Viewsets
+# /billdetail/
+
+class BillDetailViewSet(viewsets.ModelViewSet):
+    queryset = BillDetail.objects.all()
+    serializer_class = BillDetailSerializer
+
+# API with decorators and function
+# /bill/
+
+@api_view(['GET'])
+def BillDetail_list(request, pk):
+
+    try:
+        headbill = HeadBill.objects.get(pk=pk)
+    except HeadBill.DoesNotExist:
+        return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+    
+
+    # Retrive one Bill record
+    if request.method == 'GET':
+        billdata ={}
+        headbill_serializer = serializers.HeadBillSerializer(headbill)    
+        # data=headbill_serializer.data.get('HeadBillID')
+        billidnow = headbill_serializer.data.get('HeadBillID')        
+        billdata['HeadBillID'] = billidnow
+        billdata['BillDate'] = headbill_serializer.data.get('BillDate')
+        customerid = headbill_serializer.data.get('CustomerID')
+        try:
+            customer = Customer.objects.get(pk=customerid)
+        except Customer.DoesNotExist:
+            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+        customer_serializer = serializers.CustomerSerializer(customer)
+        billdata['FirstName'] = customer_serializer.data.get('FirstName')
+        billdata['LastName'] = customer_serializer.data.get('LastName')
+        billdata['Address'] = customer_serializer.data.get('Address')
+        billdata['PostalCode'] = customer_serializer.data.get('PostalCode')
+
+        billproductsid = BillDetail.objects.filter(BillID=1)
+        serializer_billprodid = serializers.BillDetailSerializer(billproductsid, many=True)
+    
+
+
+        # test1 = BillDetail.objects.filter(productID__)
+        billproductsid2 = Product.objects.filter(productID__BillID='1').values('NameProduct', 'PriceProduct')
+        # billprodList_serializer = serializers.ProductSerializer(billproductsid2, many=True)
+
+        # billdata['Products'] = billprodList_serializer
+        billdata['Products'] = billproductsid2
+
+        # billproductsid = BillDetail.objects.filter(BillID=1).values('ProductID')
+        # serializer_billprodid = serializers.BillDetailSerializer(billproductsid, many=True)
+        # billprodid_list = serializer_billprodid.data
+        
+
+        # billdata['NameProduct'] = billproductsid2
+        total_price = Product.objects.filter(productID__BillID='1').aggregate(total_price=Sum('PriceProduct'))
+
+        billdata['TotalPrice'] = total_price['total_price'] 
+        
+
+        billdata1=BillSerializer() 
+
+
+        bill_serializer = serializers.BillSerializer(billdata)
+        return Response(billdata)

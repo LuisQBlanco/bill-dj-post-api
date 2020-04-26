@@ -1,7 +1,11 @@
 from rest_framework import serializers
+from rest_framework.fields import   CharField,\
+                                    IntegerField
+
+import datetime
 
 from core.models import Customer, Subscription, Product, TaxType, HeadBill
-
+from core.models import RelationshipTaxProduct, BillDetail
 
 class CustomerSerializer(serializers.ModelSerializer):
 
@@ -9,24 +13,37 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = [  'id',
-                    'firstname',
-                    'lastname',
-                    'email',
-                    'birthday',
-                    'address',
-                    'postalcode',
-                    'province' ]
-        # read_only_fields = ('id',)
+        fields = '__all__'
 
 class SubscriptionSerializer(serializers.ModelSerializer):
 
+    customersID = CustomerSerializer(read_only=True,many=True)
+    # CreateDate = datetime.date.today
+
     class Meta:
         model = Subscription
-        fields = [  'SubscriptionID',
-                    'SubscriptionCard',
-                    'CreateDate',
-                    'ExpDate']
+        # fields = [  'SubscriptionID',
+        #             'SubscriptionCard',
+        #             'CreateDate',
+        #             'ExpDate',
+        #             'CustomersID']
+        fields = '__all__'
+
+class HeadBillSerializer(serializers.ModelSerializer):
+
+    customerID = CustomerSerializer(read_only=True, many=True)
+
+    class Meta:
+        
+        model = HeadBill
+        fields = '__all__'
+        # [  'HeadBillID',
+        #             'CustomerID',
+        #             'BillDate',
+        #             'BillNumber']
+
+
+
 
 class ProductSerializer(serializers.ModelSerializer): 
 
@@ -35,6 +52,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [  'ProductID',
                     'NameProduct',
                     'PriceProduct']
+
 class TaxTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -43,12 +61,34 @@ class TaxTypeSerializer(serializers.ModelSerializer):
                     'TaxType',
                     'TaxPercentage']
 
-class HeadBillSerializer(serializers.ModelSerializer):
+class RelationshipTaxProductSerializer(serializers.ModelSerializer):
+
+    productsID = ProductSerializer(read_only=True,many=True)
+    taxestypeID = TaxTypeSerializer(read_only=True,many=True)
 
     class Meta:
-        model = HeadBill
-        # fields = [  'HeadBillID',
-        #             'CustomerID',
-        #             'BillDate',
-        #             'BillNumber']
+        model = RelationshipTaxProduct
         fields = '__all__'
+
+class BillDetailSerializer(serializers.ModelSerializer):
+
+    billID = HeadBillSerializer(read_only=True,many=True)
+    productsID = ProductSerializer(read_only=True,many=True)
+
+    class Meta:
+        model = BillDetail
+        fields = '__all__'
+        # fields = [  'BillDetailID',
+        #             'BillID',
+        #             'ProductID',
+        #             'total_price']
+ 
+
+class BillSerializer(serializers.ModelSerializer):
+
+    BillID = IntegerField()
+    BCFirstName = CharField(max_length=45)
+    BCLastName = CharField(max_length=45)
+
+    class Meta:
+        fields = []
