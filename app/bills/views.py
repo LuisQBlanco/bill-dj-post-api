@@ -24,7 +24,7 @@ from bills.serializers import CustomerSerializer,SubscriptionSerializer
 from bills.serializers import ProductSerializer, TaxTypeSerializer, HeadBillSerializer, RelationshipTaxProductSerializer
 from bills.serializers import BillSerializer, BillDetailSerializer
 
-from django.db.models import Sum
+from django.db.models import OuterRef, Subquery, Sum
 
 
 # API with Class with Generics
@@ -206,6 +206,7 @@ class BillDetailViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def BillDetail_list(request, pk):
 
+    # Retrive a object with a pk 
     try:
         headbill = HeadBill.objects.get(pk=pk)
     except HeadBill.DoesNotExist:
@@ -214,30 +215,40 @@ def BillDetail_list(request, pk):
 
     # Retrive one Bill record
     if request.method == 'GET':
+        # Create a object Dict
         billdata ={}
         headbill_serializer = serializers.HeadBillSerializer(headbill)    
-        # data=headbill_serializer.data.get('HeadBillID')
-        billidnow = headbill_serializer.data.get('HeadBillID')        
-        billdata['HeadBillID'] = billidnow
+        
+        # Obtain current bill number and save in the object
+        
+        billidnow = headbill_serializer.data.get('BillNumber')        
+        billdata['BillNumber'] = billidnow
         billdata['BillDate'] = headbill_serializer.data.get('BillDate')
+        
+        # Obtain current customer in the bill and save
         customerid = headbill_serializer.data.get('CustomerID')
         try:
             customer = Customer.objects.get(pk=customerid)
         except Customer.DoesNotExist:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+
         customer_serializer = serializers.CustomerSerializer(customer)
+        
         billdata['FirstName'] = customer_serializer.data.get('FirstName')
         billdata['LastName'] = customer_serializer.data.get('LastName')
         billdata['Address'] = customer_serializer.data.get('Address')
         billdata['PostalCode'] = customer_serializer.data.get('PostalCode')
 
-        billproductsid = BillDetail.objects.filter(BillID=1)
-        serializer_billprodid = serializers.BillDetailSerializer(billproductsid, many=True)
+        # Find all product related with the bill and customer
+        
+        # billproductsid = BillDetail.objects.filter(BillID=1)
+        # serializer_billprodid = serializers.BillDetailSerializer(billproductsid, many=True)
     
+        # re-factory used Join between  Product and BillDetail with  just one customer
 
-
-        # test1 = BillDetail.objects.filter(productID__)
-        billproductsid2 = Product.objects.filter(productID__BillID=billidnow).values('NameProduct', 'PriceProduct')
+        billproductsid = Product.objects.filter(productID__BillID=billidnow)
+        # billproductsid2 = Product.objects.filter(productID__BillID=billidnow).values('NameProduct', 'PriceProduct')
+        billproductsid2 = billproductsid.values()
         # billprodList_serializer = serializers.ProductSerializer(billproductsid2, many=True)
 
         # billdata['Products'] = billprodList_serializer
@@ -252,10 +263,49 @@ def BillDetail_list(request, pk):
         total_price = Product.objects.filter(productID__BillID=billidnow).aggregate(total_price=Sum('PriceProduct'))
 
         billdata['TotalPrice'] = total_price['total_price'] 
+
+        billproducttax =  TaxType.objects.filter(taxestypeID__ProductsID=billidnow)
+        
+        
+        # billproducttax2 = Product.objects.filter(productID__BillID=billidnow).annotate(billproducttax)
+ 
+        billproducttax2 = RelationshipTaxProduct.objects.prefetch_related('ProductsID').all()
         
 
-        billdata1=BillSerializer() 
+
+        billproducts = []
+
+        for billproduct in billproductsid:
+            # producact=billproduct['ProductID']
+            producact=billproduct.ProductID
+            taxesproduct = [ {"typeTax": tax.TaxType, "Percent": tax.TaxPercentage} for tax in TaxType.objects.filter(taxestypeID__ProductsID=producact)]
+
+            billproducts.append({
+                'ProductID': billproduct.ProductID,
+                'NameProduct': billproduct.NameProduct,
+                'PriceProduct': billproduct.PriceProduct,
+                'TaxesProduct': taxesproduct
+            })
+
+        billdata['ProductTaxes'] = billproducts
+
+        billdata['ProductTaxes2'] = billproductsid.annotate(tax=Subquery(TaxType.objects.filter(taxestypeID__ProductsID=OuterRef('ProductID')).values('TaxType')[:1])).values()
+        # asdf=billproductsid2.values('ProductID')
+        # billproducttax3 = TaxType.objects.filter(taxestypeID__ProductsID=billproductsid2.values('ProductID')).values().values()
+       
+        billproducttax3 = TaxType.objects.filter(taxestypeID__ProductsID__productID__BillID__BillNumber=billidnow).values()
+
+        # billproducttax3 = TaxType.objects.filter(taxestypeID__ProductsID__BillID__BillNumber=billidnow).values()
+
+        billdata['ProductTaxes3'] = billproducttax3
 
 
-        bill_serializer = serializers.BillSerializer(billdata)
+        # billproductsid = Product.objects.annotate()
+
+        # billdata['TotalItemSold'] = productsID
+
+        # billdata1=BillSerializer() 
+
+
+        # bill_serializer = serializers.BillSerializer(billdata)
         return Response(billdata)
