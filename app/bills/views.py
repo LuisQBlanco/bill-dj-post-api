@@ -264,9 +264,7 @@ def BillDetail_list(request, pk):
 
         billdata['TotalPrice'] = total_price['total_price'] 
 
-        billproducttax =  TaxType.objects.filter(taxestypeID__ProductsID=billidnow)
-        
-        
+        # billproducttax =  TaxType.objects.filter(taxestypeID__ProductsID=billidnow)
         # billproducttax2 = Product.objects.filter(productID__BillID=billidnow).annotate(billproducttax)
  
         billproducttax2 = RelationshipTaxProduct.objects.prefetch_related('ProductsID').all()
@@ -274,20 +272,31 @@ def BillDetail_list(request, pk):
 
 
         billproducts = []
+        acumtaxproductvalue = 0
 
         for billproduct in billproductsid:
-            # producact=billproduct['ProductID']
+            
             producact=billproduct.ProductID
-            taxesproduct = [ {"typeTax": tax.TaxType, "Percent": tax.TaxPercentage} for tax in TaxType.objects.filter(taxestypeID__ProductsID=producact)]
+            taxesproduct = [ {"typeTax": tax.TaxType, "Percent": tax.TaxPercentage } for tax in TaxType.objects.filter(taxestypeID__ProductsID=producact)]
+            
+            acum_taxes=0
+            for taxperc in taxesproduct:
+                acum_taxes += taxperc['Percent']
+            
+            taxproductvalue = billproduct.PriceProduct * acum_taxes/100
+
+            acumtaxproductvalue += taxproductvalue
 
             billproducts.append({
                 'ProductID': billproduct.ProductID,
                 'NameProduct': billproduct.NameProduct,
                 'PriceProduct': billproduct.PriceProduct,
-                'TaxesProduct': taxesproduct
+                'TaxesProduct': taxesproduct,
+                'TaxProductValue': taxproductvalue
             })
 
         billdata['ProductTaxes'] = billproducts
+        billdata['AcumTaxesProduct'] = acumtaxproductvalue
 
         billdata['ProductTaxes2'] = billproductsid.annotate(tax=Subquery(TaxType.objects.filter(taxestypeID__ProductsID=OuterRef('ProductID')).values('TaxType')[:1])).values()
         # asdf=billproductsid2.values('ProductID')
