@@ -1,12 +1,12 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.44.0/containers/python-3
 {
-	"name": "bill_dj_postg",
+	"name": "bill_dj_postg_test",
 	//"context": "..",
 	//"dockerFile": "Dockerfile",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "billdjpostg",
-	"workspaceFolder": "/billdjpostg",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "billdjpostgtest",
+	"workspaceFolder": "/billdjpostgtest",
 
 	// Use 'settings' to set *default* container specific settings.json values on container create. 
 	// You can edit these settings after create using File > Preferences > Settings > Remote.

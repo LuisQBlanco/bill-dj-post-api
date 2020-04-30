@@ -4,7 +4,7 @@ FROM python:3.7-alpine
 ENV PYTHONUNBUFFERED 1
 
 # RUN mkdir billdjpostg
-COPY ./.devcontainer/requirements.txt /billdjpostg/requirements.txt
+COPY ./requirements.txt /billdjpostgtest/requirements.txt
 
 RUN apk update --no-cache
 RUN apk add --update --no-cache postgresql-client 
@@ -18,7 +18,7 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps \
       # musl-dev zlib \
       # zlib-dev libjpeg
       
-RUN pip install -r /billdjpostg/requirements.txt
+RUN pip install -r /billdjpostgtest/requirements.txt
 
 RUN apk update --no-cache
 RUN apk del .tmp-build-deps
@@ -27,8 +27,8 @@ RUN apk del .tmp-build-deps
 
 
 # RUN mkdir /billdjpostg
-WORKDIR /billdjpostg
-COPY ./app /billdjpostg/
+WORKDIR /billdjpostgtest
+COPY ./app /billdjpostgtest/
 
 # RUN mkdir -p /vol/web/media
 # RUN mkdir -p /vol/web/static
