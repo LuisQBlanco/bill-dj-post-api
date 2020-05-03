@@ -98,13 +98,26 @@ luisq@luisq:~/Course/bill-dj-post-api-test1$
     * Execute file into the container
     
 ```bash
-    docker exec -it <container_name> psql -U <username> -a <db_name> -f /<filename_in_container>.sql
+    docker exec -it <container_ID> psql -U <username> -a <db_name> -f /<filename_in_container>.sql
 
     Example:
 
     docker exec -it f16819c66a01 psql -U postgres1 -a app -f /data_in.sql
 ```
-
+> After all does step just check if any migrate need and run development server 
+ 
 ```bash
-    docker-compose run billdjpostg sh -c "python manage.py makemigrations"
+    docker-compose up
+    docker-compose run --rm billdjpostg sh -c "python manage.py makemigrations"
+    docker-compose run --rm billdjpostg sh -c "python manage.py migrate"
+    docker-compose run --rm billdjpostg sh -c "python manage.py runserver"
 ```
+> To know which ip used in the browser just run this inspect
+```bash
+    docker ps
+
+    docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_ID>
+
+    docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e17f4fff127e
+```
+>The file **Insomnia_2020-05-03.json** have the setup to do the test 
