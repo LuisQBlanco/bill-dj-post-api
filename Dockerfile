@@ -4,7 +4,9 @@ FROM python:3.8-alpine
 ENV PYTHONUNBUFFERED 1
 
 # RUN mkdir billdjpostg
-COPY ./.devcontainer/requirements.txt /billdjpostg/requirements.txt
+# COPY ./.devcontainer/requirements.txt /billdjpostg/requirements.txt
+
+COPY requirements.txt /billdjpostg/
 
 RUN apk update --no-cache
 RUN apk add --update --no-cache postgresql-client 

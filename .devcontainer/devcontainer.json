@@ -4,7 +4,7 @@
 	"name": "bill_dj_postg",
 	//"context": "..",
 	//"dockerFile": "Dockerfile",
-	"dockerComposeFile": "docker-compose.yml",
+	"dockerComposeFile": "../docker-compose.yml",
 	"service": "billdjpostg",
 	"workspaceFolder": "/billdjpostg",
 	"appPort": ["0.0.0.0"],
@@ -34,7 +34,7 @@
 	// Add the IDs of extensions you want installed when the container is created in the array below.
 	"extensions": [
 		"ms-python.python",
-		"VisualStudioExptTeam.vscodeintellicode",
+		// "VisualStudioExptTeam.vscodeintellicode",
 		"garytyler.darcula-pycharm",
 		"felixrieseberg.vsc-travis-ci-status",
 		"donjayamanne.python-extension-pack",
@@ -42,7 +42,11 @@
 		"shamanu4.django-intellisense",
 		// "eamodio.gitlens",
 		"equinusocio.vsc-material-theme-icons",
-		"tobiasalthoff.atom-material-theme"
+		"tobiasalthoff.atom-material-theme",
+		"coenraads.bracket-pair-colorizer",
+		"streetsidesoftware.code-spell-checker",
+		"christian-kohler.path-intellisense",
+
 
 	]
 	

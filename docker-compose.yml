@@ -1,14 +1,14 @@
-version: "3"
+version: "3.7"
 
 services:
   billdjpostg:
     build: 
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     ports:
       - 8000:8000
     volumes:
-      - ../app:/billdjpostg
+      - ./app:/billdjpostg
     # command:
 
       # sh -c "python manage.py wait_for_db &&
@@ -20,9 +20,6 @@ services:
       # python manage.py wait_for_db &&
       # python manage.py migrate &&
       # python manage.py runserver 0.0.0.0:8000
-    # command: 
-      # WORKDIR /app
-      # sh -c "python manage.py runserver 127.0.0.1:8000"
 
     environment:
       - DB_HOST=db
@@ -32,16 +29,17 @@ services:
     depends_on:
       - db
 
-    # links:
-    #   - db
-
   db:
     image: postgres:12-alpine
     
     restart: unless-stopped
     # ports:
     #   - 5430:5430
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     environment: 
       - POSTGRES_DB=app
       - POSTGRES_USER=postgres1
       - POSTGRES_PASSWORD=supersecretpassword
+volumes:
+  postgres-data:
