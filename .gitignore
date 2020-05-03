@@ -127,10 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
 imagetest.zip
 imagetest2.zip
 
 
 /backup_data
-/docker
+/resp_docker
 
