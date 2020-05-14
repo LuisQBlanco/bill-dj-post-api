@@ -25,6 +25,8 @@ from bills.serializers import ProductSerializer, TaxTypeSerializer, HeadBillSeri
 from bills.serializers import BillSerializer, BillDetailSerializer
 
 from django.db.models import OuterRef, Subquery, Sum
+from django.db.models import FilteredRelation, Q
+from django.db.models.query import RawQuerySet
 
 
 # API with Class with Generics
@@ -108,10 +110,7 @@ class SubscriptionList(APIView):
         return Response(serializer.data)
 
     def post(self,request):
-        serializer = SubscriptionSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
+  from django.db.models import FilteredRelation          return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class SubscriptionDetail(APIView):
@@ -140,6 +139,7 @@ class SubscriptionDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 """
+
 
 # API with Class with Mixin
 # /products/
@@ -203,41 +203,78 @@ class BillDetailViewSet(viewsets.ModelViewSet):
 # API with decorators and function
 # /bill/
 
+def apptest(self):
+
+    a100 = Customer.objects.filter(customerID__BillNumber=1).values()
+
+    return print(a100)
+
 @api_view(['GET'])
 def BillDetail_list(request, pk):
 
-    # Retrive a object with a pk 
+    # Retrive an object with a pk, and obtained the customer data, headbill data  associate to the bill number requested
+    
     try:
-        headbill = HeadBill.objects.get(pk=pk)
+        headbill = HeadBill.objects.annotate(bill=FilteredRelation('CustomerID_id',\
+            condition=Q(BillNumber=str(pk)))).values('BillNumber','BillDate', 'bill__FirstName',\
+            'bill__LastName', 'bill__Address', 'bill__PostalCode')
+
     except HeadBill.DoesNotExist:
         return HttpResponse(status=status.HTTP_404_NOT_FOUND)
-    
+
 
     # Retrive one Bill record
     if request.method == 'GET':
-        # Create a object Dict
-        billdata ={}
-        headbill_serializer = serializers.HeadBillSerializer(headbill)    
         
+        # Variables initial condition
+        # Create a object Dict
+        
+        billdata ={}
+        
+        headbill1 = headbill[0]
+
+        for key, value in headbill1.items():
+            billdata[key] = value
+
+        billidnow = headbill1['BillNumber']
+
+
+
+
+
+
+
+
+
+
+
+
+        # headbill1 = headbill.HeadBill
+
+        # headbill_serializer = serializers.HeadBillSerializer(headbill)
+
+        # customer_serializer = serializers.CustomerSerializer(headbill)
+
         # Obtain current bill number and save in the object
         
-        billidnow = headbill_serializer.data.get('BillNumber')        
-        billdata['BillNumber'] = billidnow
-        billdata['BillDate'] = headbill_serializer.data.get('BillDate')
+        # billidnow = headbill_serializer.data.get('BillNumber')
+              
+        # billdata['BillNumber'] = billidnow
+        # billdata['BillDate'] = headbill_serializer.data.get('BillDate')
         
-        # Obtain current customer in the bill and save
-        customerid = headbill_serializer.data.get('CustomerID')
-        try:
-            customer = Customer.objects.get(pk=customerid)
-        except Customer.DoesNotExist:
-            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+        # # Obtain current customer in the bill and save
+        # customerid = headbill_serializer.data.get('CustomerID')
+        # try:
+        #     customer = Customer.objects.get(pk=customerid)
+        # except Customer.DoesNotExist:
+        #     return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
-        customer_serializer = serializers.CustomerSerializer(customer)
+        # customer_serializer = serializers.CustomerSerializer(customer)
         
-        billdata['FirstName'] = customer_serializer.data.get('FirstName')
-        billdata['LastName'] = customer_serializer.data.get('LastName')
-        billdata['Address'] = customer_serializer.data.get('Address')
-        billdata['PostalCode'] = customer_serializer.data.get('PostalCode')
+        # billdata['FirstName'] = customer_serializer.data.get('FirstName')
+        # billdata['LastName'] = customer_serializer.data.get('LastName')
+        # billdata['Address'] = customer_serializer.data.get('Address')
+        # billdata['PostalCode'] = customer_serializer.data.get('PostalCode')
 
         # Find all product related with the bill and customer
         
@@ -246,13 +283,16 @@ def BillDetail_list(request, pk):
     
         # re-factory used Join between  Product and BillDetail with  just one customer
 
-        billproductsid = Product.objects.filter(productID__BillID=billidnow)
+        
         # billproductsid2 = Product.objects.filter(productID__BillID=billidnow).values('NameProduct', 'PriceProduct')
-        billproductsid2 = billproductsid.values()
+        # billproductsid2 = billproductsid.values()
         # billprodList_serializer = serializers.ProductSerializer(billproductsid2, many=True)
 
         # billdata['Products'] = billprodList_serializer
-        billdata['Products'] = billproductsid2
+
+        # billproductsid = Product.objects.filter(productID__BillID=billidnow)
+        # billproductsid2 = billproductsid.values()
+        # billdata['Products'] = billproductsid2
 
         # billproductsid = BillDetail.objects.filter(BillID=1).values('ProductID')
         # serializer_billprodid = serializers.BillDetailSerializer(billproductsid, many=True)
@@ -260,6 +300,11 @@ def BillDetail_list(request, pk):
         
 
         # billdata['NameProduct'] = billproductsid2
+        
+        billproductsid = Product.objects.filter(productID__BillID=billidnow)
+        billproductsid2 = billproductsid.values()
+        billdata['Products'] = billproductsid2
+
         total_price = Product.objects.filter(productID__BillID=billidnow).aggregate(total_price=Sum('PriceProduct'))
 
         billdata['TotalPrice'] = total_price['total_price'] 
